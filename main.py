@@ -7,7 +7,7 @@ import asyncio, pytz
 from datetime import datetime, timedelta
 bot = Bot(TOKEN, parse_mode="html")
 dp = Dispatcher(bot)
-db_mysq = database(host="localhost", user="devuser", password="123!@#qweQWE", database="puzzlescrusade")
+db_mysq = database(host="localhost", user="root", password="", database="puzzlescrusade")
 db = datebase()
 
 THRESHOLDS = [
@@ -566,7 +566,10 @@ async def check_users():
                         if random.randint(1, 5) == 3:
                             photo = False
                         else:
-                            photo = random.choice(notifications['pic'])
+                            try:
+                                photo = random.choice(notifications['pic'])
+                            except:
+                                photo = False
                         await send_notification(user_id, message, button, photo)
                         await db_mysq.update_last_notified(user_id)
                         break
