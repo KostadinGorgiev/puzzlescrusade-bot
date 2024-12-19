@@ -7,7 +7,7 @@ import asyncio, pytz
 from datetime import datetime, timedelta
 bot = Bot(TOKEN, parse_mode="html")
 dp = Dispatcher(bot)
-db_mysq = database(host="localhost", user="root", password="", database="puzzlescrusade")
+db_mysq = database(host="localhost", user="devuser", password="123!@#qweQWE", database="puzzlescrusade")
 db = datebase()
 
 THRESHOLDS = [
