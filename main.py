@@ -1,14 +1,28 @@
-import random
+import random, pytz, asyncio, os, logging
+from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, executor, types
+from dotenv import load_dotenv
 from settings import *
 from db_mysq import database
 from db import datebase
-import asyncio, pytz
-from datetime import datetime, timedelta
+load_dotenv()
+
+TOKEN = os.getenv("TOKEN")
+MAIN_TOKEN = os.getenv("MAIN_TOKEN")
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
 bot = Bot(TOKEN, parse_mode="html")
+main_bot = Bot(MAIN_TOKEN, parse_mode="html")
+
 dp = Dispatcher(bot)
-db_mysq = database(host="localhost", user="devuser", password="123!@#qweQWE", database="puzzlescrusade")
+
+db_mysq = database(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
 db = datebase()
+
+logging.basicConfig(level=logging.INFO)
 
 THRESHOLDS = [
     (timedelta(hours=5), "5h"),
@@ -265,6 +279,7 @@ async def admin_command(message: types.Message):
 async def start(message: types.Message):
     if await db.user_exist(message.chat.id) is False:
         await db.add_user(message.chat.id)
+    return await admin(message)
     markup = types.InlineKeyboardMarkup(row_width=1).add(
         types.InlineKeyboardButton("PLAY", url = "https://t.me/pctabot/pcta"),
         types.InlineKeyboardButton("Join Our Chat", url="https://t.me/puzzlescrusade"),
@@ -499,15 +514,14 @@ async def broadcast(message: types.Message, data):
     for user in users:
         try:
             if data['media_type'] == "text":
-                await bot.send_message(chat_id=user['t_user_id'], text=data['text'],
+                await main_bot.send_message(chat_id=user['t_user_id'], text=data['text'],
                                             reply_markup=data['markup'], entities=data['entities'])
             elif data['media_type'] == "photo":
-                await bot.send_photo(chat_id=user['t_user_id'], caption=data['text'],
+                await main_bot.send_photo(chat_id=user['t_user_id'], caption=data['text'],
                                           photo=data['file_id'], reply_markup=data['markup'],
                                           caption_entities=data['entities'])
             s+=1
         except Exception as ex:
-            print(ex)
             f+=1
             ...
         i+=1
@@ -521,12 +535,12 @@ async def broadcast(message: types.Message, data):
 async def send_notification(user_id, message, button, photo = False):
     try:
         if photo:
-            await bot.send_photo(user_id, photo= photo, caption=message, parse_mode="html",
+            await main_bot.send_photo(user_id, photo= photo, caption=message, parse_mode="html",
                                    reply_markup=types.InlineKeyboardMarkup(row_width=1).add(
                                        types.InlineKeyboardButton(button, url="https://t.me/pctabot/pcta")
                                    ))
         else:
-            await bot.send_message(user_id, text = message, parse_mode="html",
+            await main_bot.send_message(user_id, text = message, parse_mode="html",
                                    reply_markup=types.InlineKeyboardMarkup(row_width=1).add(
                 types.InlineKeyboardButton(button, url = "https://t.me/pctabot/pcta")
             ))
@@ -582,7 +596,7 @@ if __name__ == '__main__':
     from aiogram import executor
     loop = asyncio.get_event_loop()
     loop.create_task(periodic_check())
-    executor.start_polling(dp, loop=loop, skip_updates=True)
+    executor.start_polling(dp, loop=loop)
 
 
 
